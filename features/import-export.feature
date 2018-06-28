@@ -1,4 +1,5 @@
 Feature: Import/Export project
+
   Background:
     Given a logged in user named John
     And a project named "Import/Export Test" owned by John

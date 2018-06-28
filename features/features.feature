@@ -1,4 +1,5 @@
 Feature: Feature
+
   Background:
     Given a logged in user named John
     And a project named "Example Project" owned by John

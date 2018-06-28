@@ -1,4 +1,5 @@
 Feature: Projects
+
   Background:
     Given a logged in user named John
 
