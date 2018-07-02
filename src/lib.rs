@@ -224,6 +224,10 @@ graphql_object!(QueryHolder: Context as "Query" |&self| {
             graphql_value!({ "error": "invalid parameters" })
         ))
     }
+
+    field project(&executor, slug: String) -> FieldResult<Option<graphql::models::Project>> {
+        executor.context().query.project_by_slug(&slug)
+    }
 });
 
 type Schema = RootNode<'static, QueryHolder, MutatorHolder>;
