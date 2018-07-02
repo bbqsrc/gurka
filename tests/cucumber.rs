@@ -17,7 +17,8 @@ pub struct MyWorld {
     mutator: gurka::DatabaseMutator,
     query: gurka::DatabaseQuery,
     token: Option<String>,
-    current_user: Option<gurka::models::User>
+    current_user: Option<gurka::models::User>,
+    current_project: Option<gurka::models::Project>
 }
 
 impl MyWorld {
@@ -42,6 +43,13 @@ impl MyWorld {
             None => None
         }
     }
+
+    pub fn current_project(&self) -> Option<&gurka::models::Project> {
+        match &self.current_project {
+            Some(v) => Some(&v),
+            None => None
+        }
+    }
 }
 
 impl cucumber_rust::World for MyWorld {
@@ -60,7 +68,8 @@ impl std::default::Default for MyWorld {
             mutator: gurka::DatabaseMutator::new(pool.clone()),
             query: gurka::DatabaseQuery::new(pool.clone()),
             token: None,
-            current_user: None
+            current_user: None,
+            current_project: None
         }
     }
 }

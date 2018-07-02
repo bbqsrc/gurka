@@ -25,8 +25,6 @@ use juniper::{FieldResult, FieldError, RootNode};
 
 use r2d2_diesel::ConnectionManager;
 use r2d2::Pool;
-use diesel::insert_into;
-use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use dotenv::dotenv;
 use std::env;
@@ -90,6 +88,8 @@ pub trait GurkaMutator : Clone + Send + Sync {
     fn create_user(&self, username: &str, password: String) -> FieldResult<graphql::models::User>;
     fn create_project(&self, slug: String, name: String, owner: &models::User) -> FieldResult<graphql::models::Project>;
     fn log_in(&self, username: &str, password: &str) -> FieldResult<graphql::models::UserSession>;
+    fn delete_project(&self, project: models::Project) -> FieldResult<String>;
+    fn rename_project_slug(&self, project: models::Project, new_slug: &str) -> FieldResult<graphql::models::Project>;
 }
 
 #[derive(Clone)]
@@ -119,6 +119,18 @@ impl GurkaMutator for DatabaseMutator {
             name: name,
             owner_id: owner.id
         })?;
+        Ok(graphql::models::Project::new(record))
+    }
+
+    fn delete_project(&self, project: models::Project) -> FieldResult<String> {
+        let db = self.pool.get()?;
+        let id = models::Project::delete(&*db, project)?;
+        Ok(id)
+    }
+
+    fn rename_project_slug(&self, project: models::Project, new_slug: &str) -> FieldResult<graphql::models::Project> {
+        let db = self.pool.get()?;
+        let record = models::Project::rename_slug(&*db, project, new_slug)?;
         Ok(graphql::models::Project::new(record))
     }
 

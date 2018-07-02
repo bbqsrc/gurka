@@ -1,10 +1,12 @@
 use ::models;
-use ::schema;
 use ::Context;
 use juniper::{FromContext, FieldResult, FieldError};
 use diesel::prelude::*;
-use juniper_relay::PageInfo;
-use uuid::Uuid;
+
+#[derive(GraphQLObject)]
+pub struct Success {
+    is_success: bool
+}
 
 pub struct User {
     pub model: models::User

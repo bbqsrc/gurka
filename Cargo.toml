@@ -27,4 +27,4 @@ uuid = { version = "^0.5", features = ["v4"] }
 cucumber_rust = { path = "../cucumber-rust"}
 
 [patch.crates-io]
-gherkin_rust = { path = "../gherkin-rust" }
+# gherkin_rust = { path = "../gherkin-rust" }
