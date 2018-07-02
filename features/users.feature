@@ -1,6 +1,5 @@
 Feature: User
   Scenario: Create user
-    Given a person named John
     When John creates an account
     Then an account named John is created
 

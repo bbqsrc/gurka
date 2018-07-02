@@ -1,19 +1,38 @@
-extern crate rocket;
-
 use gurka;
+use gurka::GurkaMutator;
+
+use ::MyWorld;
 
 steps! {
+    world: MyWorld;
+
+    when "John creates an account" |world, _| {
+        let db = world.pool().get().unwrap();
+        let new_user = gurka::models::NewUser::create(&*db, "john", "abc123".to_owned()).unwrap();
+        assert_eq!(new_user.username, "john");
+    };
+
+    then "an account named John is created" |world, _| {
+        let db = world.pool().get().unwrap();
+        let user = gurka::models::User::find_by_username(&*db, "john").unwrap().unwrap();
+        assert_eq!(user.username, "john");
+    };
+
+    given "a logged in user named John" |world, step| {
+        let db = world.pool().get().unwrap();
+        let new_user = gurka::models::NewUser::create(&*db, "john", "abc123".to_owned()).unwrap();
+        let model = world.mutator.log_in("john", "abc123").unwrap();
+        world.token = Some(model.session.id.hyphenated().to_string());
+    };
+
     given "the feature below:" |world, step| {
         let feature_file_string = step.docstring().unwrap();
-        let server = gurka::make_server();
-        let client = rocket::local::Client::new(server).expect("rocket to the moon");
-        let mut response = client.get("/graphql?query={\"test\":true}").dispatch();
-        unimplemented!()
+        unimplemented!();
     };
 
     given regex "^a person named (.*)$" |world, matches, step| {
         let name = &matches[1];
         assert_eq!("John", name);
-        unimplemented!()
+        unimplemented!();
     };
 }
