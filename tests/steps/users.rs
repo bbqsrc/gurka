@@ -18,6 +18,30 @@ steps! {
         assert_eq!(user.username, "john");
     };
 
+    given "an existing user named John" |world, _| {
+        let db = world.pool().get().unwrap();
+        let _ = gurka::models::NewUser::create(&*db, "john", "abc123".to_owned()).unwrap(); 
+    };
+
+    when "John uses an invalid password" |world, _| {
+        let db = world.pool().get().unwrap();
+        match world.mutator.log_in("john", "wrong password") {
+            Ok(_) => panic!("Got Ok, expected Err!"),
+            Err(e) => {
+                world.last_field_error = Some(e);
+            }
+        }
+    };
+
+    then "a login failure occurs" |world, _| {
+        match &world.last_field_error {
+            None => panic!("Expected a field error"),
+            Some(err) => {
+                assert_eq!(err.message(), "No user found or invalid password");
+            }
+        }
+    };
+
     given "a logged in user named John" |world, step| {
         let db = world.pool().get().unwrap();
         let new_user = gurka::models::NewUser::create(&*db, "john", "abc123".to_owned()).unwrap();

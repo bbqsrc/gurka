@@ -3,6 +3,7 @@
 extern crate gurka;
 extern crate rocket;
 extern crate diesel;
+extern crate juniper;
 
 fn reset() {
     std::process::Command::new("diesel")
@@ -18,7 +19,9 @@ pub struct MyWorld {
     query: gurka::DatabaseQuery,
     token: Option<String>,
     current_user: Option<gurka::models::User>,
-    current_project: Option<gurka::models::Project>
+    current_project: Option<gurka::models::Project>,
+    last_field_error: Option<juniper::FieldError>,
+    bool_result: bool
 }
 
 impl MyWorld {
@@ -69,7 +72,9 @@ impl std::default::Default for MyWorld {
             query: gurka::DatabaseQuery::new(pool.clone()),
             token: None,
             current_user: None,
-            current_project: None
+            current_project: None,
+            bool_result: false,
+            last_field_error: None
         }
     }
 }
