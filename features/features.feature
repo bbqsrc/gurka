@@ -2,7 +2,7 @@ Feature: Feature
 
   Background:
     Given a logged in user named John
-    And a project named "Example Project" owned by John
+    And a project with slug "example-project" owned by John
 
   Scenario: Create feature
     When a feature named "Example Feature" is submitted
