@@ -1,13 +1,13 @@
 use ::models;
 use ::schema;
 use ::Context;
-use juniper::{FromContext, FieldResult};
+use juniper::{FromContext, FieldResult, FieldError};
 use diesel::prelude::*;
 use juniper_relay::PageInfo;
 use uuid::Uuid;
 
 pub struct User {
-    model: models::User
+    pub model: models::User
 }
 
 impl User {
@@ -32,15 +32,19 @@ graphql_object!(User: Context as "User" |&self| {
 
 pub struct UserSession {
     pub user: User,
-    pub session: models::UserSession
+    pub session_model: models::UserSession
 }
 
 impl UserSession {
     pub fn new(user: User, session: models::UserSession) -> UserSession {
         UserSession {
             user: user,
-            session: session
+            session_model: session
         }
+    }
+
+    pub fn token(&self) -> String {
+        self.session_model.id.hyphenated().to_string()
     }
 }
 
@@ -52,9 +56,42 @@ graphql_object!(UserSession: Context as "UserSession" |&self| {
     }
 
     field token() -> String {
-        self.session.id.hyphenated().to_string()
+        self.token()
     }
 });
 
 
 // relay_connection!(UserSessionConnection, UserSessionEdge, UserSession, Context);
+
+pub struct Project {
+    pub model: models::Project
+}
+
+impl Project {
+    pub fn new(project: models::Project) -> Project {
+        Project { model: project }
+    }
+}
+
+graphql_object!(Project: Context as "Project" |&self| {
+    description: "A project"
+
+    field slug() -> &str {
+        &self.model.slug
+    }
+
+    field name() -> &str {
+        &self.model.name
+    }
+
+    field owner(&executor) -> FieldResult<User> {
+        let maybe_user = executor.context().query.user_by_id(self.model.owner_id)?;
+        match maybe_user {
+            Some(user) => Ok(user),
+            None => Err(FieldError::new(
+                "No user found for owner_id of project",
+                graphql_value!({ "error": "internal error" })
+            ))
+        }
+    }
+ });

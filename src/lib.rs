@@ -49,13 +49,23 @@ pub fn establish_pool() -> PgPool {
 
 #[derive(Clone)]
 pub struct Context {
-    token: Option<String>
+    pub pool: PgPool,
+    pub token: Option<String>,
+    pub current_user: Option<models::User>,
+    pub mutator: DatabaseMutator,
+    pub query: DatabaseQuery
 }
 
 impl Context {
     pub fn new() -> Context {
+        let pool = establish_pool();
+        
         Context {
-            token: None
+            pool: pool.clone(),
+            token: None,
+            current_user: None,
+            mutator: DatabaseMutator::new(pool.clone()),
+            query: DatabaseQuery::new(pool)
         }
     }
 
@@ -63,28 +73,28 @@ impl Context {
         self.token = Some(token);
         return self
     }
-}
-impl juniper::Context for Context {}
 
-struct Database {
-    pub pool: PgPool   
-}
-
-impl Database {
-    pub fn new(pool: PgPool) -> Database {
-        Database {
-            pool: pool
+    pub fn current_user(&self) -> Option<&models::User> {
+        match &self.current_user {
+            Some(v) => Some(&v),
+            None => None
         }
     }
 }
+impl juniper::Context for Context {}
 
-pub trait GurkaMutator {
+pub struct QueryHolder;
+pub struct MutatorHolder;
+
+pub trait GurkaMutator : Clone + Send + Sync {
     fn create_user(&self, username: &str, password: String) -> FieldResult<graphql::models::User>;
+    fn create_project(&self, slug: String, name: String, owner: &models::User) -> FieldResult<graphql::models::Project>;
     fn log_in(&self, username: &str, password: &str) -> FieldResult<graphql::models::UserSession>;
 }
 
+#[derive(Clone)]
 pub struct DatabaseMutator {
-    pub pool: PgPool   
+    pool: PgPool
 }
 
 impl DatabaseMutator {
@@ -100,6 +110,16 @@ impl GurkaMutator for DatabaseMutator {
         let db = self.pool.get()?;
         let record = models::NewUser::create(&*db, username, password)?;
         Ok(graphql::models::User::new(record))
+    }
+
+    fn create_project(&self, slug: String, name: String, owner: &models::User) -> FieldResult<graphql::models::Project> {
+        let db = self.pool.get()?;
+        let record = models::Project::new(&*db, models::NewProject {
+            slug: slug,
+            name: name,
+            owner_id: owner.id
+        })?;
+        Ok(graphql::models::Project::new(record))
     }
 
     fn log_in(&self, username: &str, password: &str) -> FieldResult<graphql::models::UserSession> {
@@ -123,27 +143,90 @@ impl GurkaMutator for DatabaseMutator {
     }
 }
 
-graphql_object!(DatabaseMutator: Context as "Mutator" |&self| {
+#[derive(Clone)]
+pub struct DatabaseQuery {
+    pool: PgPool
+}
+
+impl DatabaseQuery {
+    pub fn new(pool: PgPool) -> DatabaseQuery {
+        DatabaseQuery {
+            pool: pool
+        }
+    }
+
+    pub fn project_by_slug(&self, slug: &str) -> FieldResult<Option<graphql::models::Project>> {
+        let db = self.pool.get()?;
+        let record = models::Project::find_by_slug(&*db, slug)?;
+        match record {
+            Some(project) => Ok(Some(graphql::models::Project::new(project))),
+            None => Ok(None)
+        }
+    }
+
+    pub fn user_by_id(&self, id: i32) -> FieldResult<Option<graphql::models::User>> {
+        let db = self.pool.get()?;
+        let record = models::User::find_by_id(&*db, id)?;
+        match record {
+            Some(user) => Ok(Some(graphql::models::User::new(user))),
+            None => Ok(None)
+        }
+    }
+
+    pub fn user_by_username(&self, username: &str) -> FieldResult<Option<graphql::models::User>> {
+        let db = self.pool.get()?;
+        let record = models::User::find_by_username(&*db, username)?;
+        match record {
+            Some(user) => Ok(Some(graphql::models::User::new(user))),
+            None => Ok(None)
+        }
+    }
+}
+
+graphql_object!(MutatorHolder: Context as "Mutator" |&self| {
     description: "Mutation"
 
     field create_user(&executor, username: String, password: String) -> FieldResult<graphql::models::User> {
-        self.create_user(&username, password)
+        executor.context().mutator.create_user(&username, password)
+    }
+
+    field create_project(&executor, slug: String, name: String) -> FieldResult<graphql::models::Project> {
+        match executor.context().current_user() {
+            Some(user) => {
+                executor.context().mutator.create_project(slug, name, &user)
+            },
+            None => Err(FieldError::new(
+                "No user associated with this session",
+                graphql_value!({ "error": "forbidden" })
+            ))
+        }
     }
 
     field log_in(&executor, username: String, password: String) -> FieldResult<graphql::models::UserSession> {
-        self.log_in(&username, &password)
+        executor.context().mutator.log_in(&username, &password)
     }
 });
 
-graphql_object!(Database: Context as "Query" |&self| {
+graphql_object!(QueryHolder: Context as "Query" |&self| {
     description: "The root query object of the schema"
 
-    field user(&executor, username: String) -> FieldResult<Option<graphql::models::User>> {
-        Ok(None)
+    field user(&executor, username: Option<String>, id: Option<i32>) -> FieldResult<Option<graphql::models::User>> {
+        if let Some(id) = id {
+            return executor.context().query.user_by_id(id);
+        }
+
+        if let Some(username) = username {
+            return executor.context().query.user_by_username(&username);
+        }
+        
+        return Err(FieldError::new(
+            "Either `username` or `id` is required",
+            graphql_value!({ "error": "invalid parameters" })
+        ))
     }
 });
 
-type Schema = RootNode<'static, Database, DatabaseMutator>;
+type Schema = RootNode<'static, QueryHolder, MutatorHolder>;
 
 #[get("/")]
 fn graphiql() -> Html<String> {
@@ -172,8 +255,8 @@ pub fn make_server() -> rocket::Rocket {
     rocket::ignite()
         .manage(Context::new())
         .manage(Schema::new(
-            Database::new(establish_pool()),
-            DatabaseMutator::new(establish_pool()),
+            QueryHolder,
+            MutatorHolder,
         ))
         .mount(
             "/",

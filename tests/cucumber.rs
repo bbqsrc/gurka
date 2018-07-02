@@ -15,7 +15,9 @@ pub struct MyWorld {
     pool: gurka::PgPool,
     client: rocket::local::Client,
     mutator: gurka::DatabaseMutator,
-    token: Option<String>
+    query: gurka::DatabaseQuery,
+    token: Option<String>,
+    current_user: Option<gurka::models::User>
 }
 
 impl MyWorld {
@@ -33,6 +35,13 @@ impl MyWorld {
             None => None
         }
     }
+
+    pub fn current_user(&self) -> Option<&gurka::models::User> {
+        match &self.current_user {
+            Some(v) => Some(&v),
+            None => None
+        }
+    }
 }
 
 impl cucumber_rust::World for MyWorld {
@@ -42,25 +51,29 @@ impl std::default::Default for MyWorld {
     fn default() -> MyWorld {
         reset();
         let server = gurka::make_server();
+        let pool = gurka::establish_pool();
 
         MyWorld {
             client: rocket::local::Client::new(server)
                 .expect("rocket to the moon"),
-            pool: gurka::establish_pool(),
-            mutator: gurka::DatabaseMutator::new(gurka::establish_pool()),
-            token: None
+            pool: pool.clone(),
+            mutator: gurka::DatabaseMutator::new(pool.clone()),
+            query: gurka::DatabaseQuery::new(pool.clone()),
+            token: None,
+            current_user: None
         }
     }
 }
 
 mod steps;
-use steps::users;
+use steps::*;
 
 cucumber! {
     features: "./features";
     world: MyWorld;
     steps: &[
-        users::steps
+        users::steps,
+        projects::steps
     ];
     before: || {
         reset();

@@ -8,7 +8,7 @@ use ring::{pbkdf2, digest};
 use ring::rand::{SystemRandom, SecureRandom};
 use uuid::Uuid;
 
-#[derive(Queryable, Debug)]
+#[derive(Queryable, Debug, Clone)]
 pub struct User {
     pub id: i32,
     pub username: String,
@@ -23,6 +23,15 @@ impl User {
             Ok(_) => true,
             Err(_) => false
         }
+    }
+
+    pub fn find_by_id(db: &PgConnection, id: i32) -> diesel::result::QueryResult<Option<User>> {
+        use schema::users::dsl as users;
+
+        schema::users::table
+            .filter(users::id.eq(id))
+            .get_result(db)
+            .optional()
     }
 
     pub fn find_by_username(db: &PgConnection, username: &str) -> diesel::result::QueryResult<Option<User>> {

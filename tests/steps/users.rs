@@ -22,7 +22,8 @@ steps! {
         let db = world.pool().get().unwrap();
         let new_user = gurka::models::NewUser::create(&*db, "john", "abc123".to_owned()).unwrap();
         let model = world.mutator.log_in("john", "abc123").unwrap();
-        world.token = Some(model.session.id.hyphenated().to_string());
+        world.token = Some(model.token());
+        world.current_user = Some(model.user.model);
     };
 
     given "the feature below:" |world, step| {
