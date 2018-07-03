@@ -5,8 +5,8 @@ Feature: Feature
     And a project with slug "example-project" owned by John
 
   Scenario: Create feature
-    When a feature named "Example Feature" is submitted
-    Then a feature named "Example Feature" is created in the project named "Example Project"
+    When a feature with slug "example-feature" is submitted
+    Then a feature with slug "example-feature" is created in the project with slug "example-project"
 
   Scenario: Read feature
     When a feature named "Example Feature" is selected

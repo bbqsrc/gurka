@@ -87,7 +87,8 @@ cucumber! {
     world: MyWorld;
     steps: &[
         users::steps,
-        projects::steps
+        projects::steps,
+        features::steps
     ];
     before: || {
         reset();

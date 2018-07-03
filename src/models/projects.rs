@@ -5,7 +5,7 @@ use ::PgConnection;
 use ::schema;
 use ::schema::projects;
 
-#[derive(Queryable, Debug)]
+#[derive(Identifiable, Queryable, Debug)]
 pub struct Project {
     pub id: i32,
     pub slug: String,
@@ -47,6 +47,15 @@ impl Project {
 
         schema::projects::table
             .filter(projects::slug.eq(slug))
+            .get_result(db)
+            .optional()
+    }
+
+    pub fn find_by_id(db: &PgConnection, id: i32) -> QueryResult<Option<Project>> {
+        use schema::projects::dsl as projects;
+
+        schema::projects::table
+            .filter(projects::id.eq(id))
             .get_result(db)
             .optional()
     }

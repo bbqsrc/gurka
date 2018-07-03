@@ -24,3 +24,14 @@ CREATE TABLE projects (
     FOREIGN KEY (owner_id) REFERENCES users (id)
 );
 CREATE INDEX project_slugs_idx ON projects (slug);
+
+CREATE TABLE features (
+    id SERIAL PRIMARY KEY,
+    project_id SERIAL NOT NULL,
+    slug TEXT NOT NULL,
+    name TEXT NOT NULL,
+
+    UNIQUE (project_id, slug),
+    FOREIGN KEY (project_id) REFERENCES projects (id)
+);
+CREATE INDEX features_idx ON features (project_id, slug);

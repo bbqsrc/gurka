@@ -87,6 +87,7 @@ pub struct MutatorHolder;
 pub trait GurkaMutator : Clone + Send + Sync {
     fn create_user(&self, username: &str, password: String) -> FieldResult<graphql::models::User>;
     fn create_project(&self, slug: String, name: String, owner: &models::User) -> FieldResult<graphql::models::Project>;
+    fn create_feature(&self, slug: String, name: String, project: &models::Project) -> FieldResult<graphql::models::Feature>;
     fn log_in(&self, username: &str, password: &str) -> FieldResult<graphql::models::UserSession>;
     fn delete_project(&self, project: models::Project) -> FieldResult<String>;
     fn rename_project_slug(&self, project: models::Project, new_slug: &str) -> FieldResult<graphql::models::Project>;
@@ -120,6 +121,16 @@ impl GurkaMutator for DatabaseMutator {
             owner_id: owner.id
         })?;
         Ok(graphql::models::Project::new(record))
+    }
+
+    fn create_feature(&self, slug: String, name: String, project: &models::Project) -> FieldResult<graphql::models::Feature> {
+        let db = self.pool.get()?;
+        let record = models::Feature::new(&*db, models::NewFeature {
+            project_id: project.id,
+            slug: slug,
+            name: name
+        })?;
+        Ok(graphql::models::Feature::new(record))
     }
 
     fn delete_project(&self, project: models::Project) -> FieldResult<String> {
@@ -176,6 +187,15 @@ impl DatabaseQuery {
         }
     }
 
+    pub fn project_by_id(&self, id: i32) -> FieldResult<Option<graphql::models::Project>> {
+        let db = self.pool.get()?;
+        let record = models::Project::find_by_id(&*db, id)?;
+        match record {
+            Some(project) => Ok(Some(graphql::models::Project::new(project))),
+            None => Ok(None)
+        }
+    }
+
     pub fn user_by_id(&self, id: i32) -> FieldResult<Option<graphql::models::User>> {
         let db = self.pool.get()?;
         let record = models::User::find_by_id(&*db, id)?;
@@ -190,6 +210,15 @@ impl DatabaseQuery {
         let record = models::User::find_by_username(&*db, username)?;
         match record {
             Some(user) => Ok(Some(graphql::models::User::new(user))),
+            None => Ok(None)
+        }
+    }
+
+    pub fn feature(&self, project_slug: &str, feature_slug: &str) -> FieldResult<Option<graphql::models::Feature>> {
+        let db = self.pool.get()?;
+        let record = models::Feature::find_one(&*db, project_slug, feature_slug)?;
+        match record {
+            Some(feature) => Ok(Some(graphql::models::Feature::new(feature))),
             None => Ok(None)
         }
     }

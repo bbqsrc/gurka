@@ -96,4 +96,37 @@ graphql_object!(Project: Context as "Project" |&self| {
             ))
         }
     }
- });
+});
+
+pub struct Feature {
+    pub model: models::Feature
+}
+
+impl Feature {
+    pub fn new(feature: models::Feature) -> Feature {
+        Feature { model: feature }
+    }
+}
+
+graphql_object!(Feature: Context as "Feature" |&self| {
+    description: "A feature"
+
+    field slug() -> &str {
+        &self.model.slug
+    }
+
+    field name() -> &str {
+        &self.model.name
+    }
+
+    field project(&executor) -> FieldResult<Project> {
+        let maybe_project = executor.context().query.project_by_id(self.model.project_id)?;
+        match maybe_project {
+            Some(project) => Ok(project),
+            None => Err(FieldError::new(
+                "No project found for project_id of feature",
+                graphql_value!({ "error": "internal error" })
+            ))
+        }
+    }
+});
