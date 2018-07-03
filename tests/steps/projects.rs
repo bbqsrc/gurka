@@ -1,4 +1,4 @@
-use gurka::GurkaMutator;
+use gurka::graphql::GurkaMutator;
 
 use ::MyWorld;
 

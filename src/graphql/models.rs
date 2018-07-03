@@ -1,7 +1,7 @@
-use ::models;
-use ::Context;
-use juniper::{FromContext, FieldResult, FieldError};
-use diesel::prelude::*;
+use juniper::{FieldResult, FieldError};
+
+use models;
+use context::Context;
 
 #[derive(GraphQLObject)]
 pub struct Success {
@@ -30,7 +30,7 @@ graphql_object!(User: Context as "User" |&self| {
     }
 });
 
-// relay_connection!(UserConnection, UserEdge, User, Context);
+relay_connection!(UserConnection, UserEdge, User, Context);
 
 pub struct UserSession {
     pub user: User,
@@ -62,8 +62,7 @@ graphql_object!(UserSession: Context as "UserSession" |&self| {
     }
 });
 
-
-// relay_connection!(UserSessionConnection, UserSessionEdge, UserSession, Context);
+relay_connection!(UserSessionConnection, UserSessionEdge, UserSession, Context);
 
 pub struct Project {
     pub model: models::Project

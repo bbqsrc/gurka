@@ -1,5 +1,5 @@
 use gurka;
-use gurka::GurkaMutator;
+use gurka::graphql::GurkaMutator;
 
 use ::MyWorld;
 
@@ -24,7 +24,6 @@ steps! {
     };
 
     when "John uses an invalid password" |world, _| {
-        let db = world.pool().get().unwrap();
         match world.mutator.log_in("john", "wrong password") {
             Ok(_) => panic!("Got Ok, expected Err!"),
             Err(e) => {
@@ -42,20 +41,20 @@ steps! {
         }
     };
 
-    given "a logged in user named John" |world, step| {
+    given "a logged in user named John" |world, _| {
         let db = world.pool().get().unwrap();
-        let new_user = gurka::models::NewUser::create(&*db, "john", "abc123".to_owned()).unwrap();
+        let _new_user = gurka::models::NewUser::create(&*db, "john", "abc123".to_owned()).unwrap();
         let model = world.mutator.log_in("john", "abc123").unwrap();
         world.token = Some(model.token());
         world.current_user = Some(model.user.model);
     };
 
-    given "the feature below:" |world, step| {
-        let feature_file_string = step.docstring().unwrap();
+    given "the feature below:" |_world, step| {
+        let _feature_file_string = step.docstring().unwrap();
         unimplemented!();
     };
 
-    given regex "^a person named (.*)$" |world, matches, step| {
+    given regex "^a person named (.*)$" |_world, matches, _| {
         let name = &matches[1];
         assert_eq!("John", name);
         unimplemented!();

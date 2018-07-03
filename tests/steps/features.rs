@@ -1,5 +1,6 @@
+use gurka::graphql::GurkaMutator;
+
 use ::MyWorld;
-use gurka::GurkaMutator;
 
 steps! {
     world: MyWorld;

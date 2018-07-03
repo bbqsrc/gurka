@@ -1,9 +1,10 @@
-use diesel::result::QueryResult;
 use diesel::prelude::*;
-use diesel::{insert_into, delete, update};
+use diesel::result::QueryResult;
+use diesel::insert_into;
+
 use ::PgConnection;
-use ::schema;
-use ::schema::features;
+use schema;
+use schema::features;
 use super::Project;
 
 #[derive(Identifiable, Queryable, Associations, Debug)]

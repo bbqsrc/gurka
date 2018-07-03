@@ -5,6 +5,8 @@ extern crate rocket;
 extern crate diesel;
 extern crate juniper;
 
+use gurka::graphql::{DatabaseMutator, DatabaseQuery};
+
 fn reset() {
     std::process::Command::new("diesel")
             .args(&["migration", "redo"])
@@ -15,13 +17,12 @@ fn reset() {
 pub struct MyWorld {
     pool: gurka::PgPool,
     client: rocket::local::Client,
-    mutator: gurka::DatabaseMutator,
-    query: gurka::DatabaseQuery,
+    mutator: DatabaseMutator,
+    query: DatabaseQuery,
     token: Option<String>,
     current_user: Option<gurka::models::User>,
     current_project: Option<gurka::models::Project>,
-    last_field_error: Option<juniper::FieldError>,
-    bool_result: bool
+    last_field_error: Option<juniper::FieldError>
 }
 
 impl MyWorld {
@@ -61,19 +62,18 @@ impl cucumber_rust::World for MyWorld {
 impl std::default::Default for MyWorld {
     fn default() -> MyWorld {
         reset();
-        let server = gurka::make_server();
+        let server = gurka::web::make_server();
         let pool = gurka::establish_pool();
 
         MyWorld {
             client: rocket::local::Client::new(server)
                 .expect("rocket to the moon"),
             pool: pool.clone(),
-            mutator: gurka::DatabaseMutator::new(pool.clone()),
-            query: gurka::DatabaseQuery::new(pool.clone()),
+            mutator: DatabaseMutator::new(pool.clone()),
+            query: DatabaseQuery::new(pool.clone()),
             token: None,
             current_user: None,
             current_project: None,
-            bool_result: false,
             last_field_error: None
         }
     }

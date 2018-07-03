@@ -1,5 +1,5 @@
 extern crate gurka;
 
 fn main() {
-    gurka::make_server().launch();
+    gurka::web::make_server().launch();
 }
