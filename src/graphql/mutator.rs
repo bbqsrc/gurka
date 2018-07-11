@@ -21,7 +21,9 @@ impl DatabaseMutator {
 pub trait GurkaMutator {
     fn create_user(&self, username: &str, password: String) -> FieldResult<graphql::models::User>;
     fn create_project(&self, slug: String, name: String, owner: &models::User) -> FieldResult<graphql::models::Project>;
-    fn create_feature(&self, slug: String, name: String, project: &models::Project) -> FieldResult<graphql::models::Feature>;
+    fn create_feature(&self, slug: String, name: String, project: &models::Project, creator: &models::User) -> FieldResult<graphql::models::Feature>;
+    fn create_step(&self, step: models::NewStep) -> FieldResult<graphql::models::Step>;
+    fn reorder_step_before(&self, src_step: models::Step, target_step: &models::Step) -> FieldResult<Vec<graphql::models::Step>>;
     fn log_in(&self, username: &str, password: &str) -> FieldResult<graphql::models::UserSession>;
     fn delete_project(&self, project: models::Project) -> FieldResult<String>;
     fn rename_project_slug(&self, project: models::Project, new_slug: &str) -> FieldResult<graphql::models::Project>;
@@ -44,14 +46,27 @@ impl GurkaMutator for DatabaseMutator {
         Ok(graphql::models::Project::new(record))
     }
 
-    fn create_feature(&self, slug: String, name: String, project: &models::Project) -> FieldResult<graphql::models::Feature> {
+    fn create_feature(&self, slug: String, name: String, project: &models::Project, creator: &models::User) -> FieldResult<graphql::models::Feature> {
         let db = self.pool.get()?;
         let record = models::Feature::new(&*db, models::NewFeature {
             project_id: project.id,
+            creator_id: creator.id,
             slug: slug,
             name: name
         })?;
         Ok(graphql::models::Feature::new(record))
+    }
+
+    fn create_step(&self, new_step: models::NewStep) -> FieldResult<graphql::models::Step> {
+        let db = self.pool.get()?;
+        let record = models::Step::new(&*db, new_step)?;
+        Ok(graphql::models::Step::new(record))
+    }
+
+    fn reorder_step_before(&self, src_step: models::Step, target_step: &models::Step) -> FieldResult<Vec<graphql::models::Step>> {
+        let db = self.pool.get()?;
+        let records = models::Step::move_to(&*db, src_step, target_step.position)?;
+        Ok(records.into_iter().map(|r| graphql::models::Step::new(r)).collect())
     }
 
     fn delete_project(&self, project: models::Project) -> FieldResult<String> {
@@ -86,6 +101,7 @@ impl GurkaMutator for DatabaseMutator {
         Ok(graphql::models::UserSession::new(graphql::models::User::new(user), session))
     }
 }
+
 graphql_object!(MutatorHolder: Context as "Mutator" |&self| {
     description: "Mutation"
 

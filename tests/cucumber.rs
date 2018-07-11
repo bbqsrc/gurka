@@ -22,7 +22,9 @@ pub struct MyWorld {
     token: Option<String>,
     current_user: Option<gurka::models::User>,
     current_project: Option<gurka::models::Project>,
-    last_field_error: Option<juniper::FieldError>
+    current_feature: Option<gurka::models::Feature>,
+    last_field_error: Option<juniper::FieldError>,
+    last_steps: Vec<Vec<gurka::models::Step>>
 }
 
 impl MyWorld {
@@ -54,6 +56,13 @@ impl MyWorld {
             None => None
         }
     }
+
+    pub fn current_feature(&self) -> Option<&gurka::models::Feature> {
+        match &self.current_feature {
+            Some(v) => Some(&v),
+            None => None
+        }
+    }
 }
 
 impl cucumber_rust::World for MyWorld {
@@ -74,7 +83,9 @@ impl std::default::Default for MyWorld {
             token: None,
             current_user: None,
             current_project: None,
-            last_field_error: None
+            current_feature: None,
+            last_field_error: None,
+            last_steps: vec![]
         }
     }
 }

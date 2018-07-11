@@ -12,6 +12,7 @@ use super::Project;
 pub struct Feature {
     pub id: i32,
     pub project_id: i32,
+    pub creator_id: i32,
     pub slug: String,
     pub name: String
 }
@@ -37,12 +38,27 @@ impl Feature {
             .get_result(db)
             .optional()
     }
+
+    pub fn find_by_id(db: &PgConnection, id: i32) -> QueryResult<Option<Feature>> {
+        use schema::features::dsl as features;
+
+        schema::features::table
+            .filter(features::id.eq(id))
+            .get_result(db)
+            .optional()
+    }
+
+    pub fn all_by_project(db: &PgConnection, project: &Project) -> QueryResult<Vec<Feature>> {
+        Feature::belonging_to(project)
+            .get_results(db)
+    }
 }
 
 #[derive(Insertable)]
 #[table_name="features"]
 pub struct NewFeature {
     pub project_id: i32,
+    pub creator_id: i32,
     pub slug: String,
     pub name: String
 }

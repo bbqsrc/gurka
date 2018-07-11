@@ -19,5 +19,4 @@ Feature: Feature
 
   Scenario: Delete feature
     When a feature named "Example Feature" is selected for deletion
-    Then a feature named "Example Feature" no longer exists
-  
+    Then a feature named "Example Feature" no longer exists              

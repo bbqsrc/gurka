@@ -95,6 +95,58 @@ graphql_object!(Project: Context as "Project" |&self| {
             ))
         }
     }
+
+    field features(&executor) -> FieldResult<Vec<Feature>> {
+        executor.context().query.project_features(self.model.id)
+    }
+});
+
+pub struct Step {
+    pub model: models::Step
+}
+
+impl Step {
+    pub fn new(step: models::Step) -> Step {
+        Step { model: step }
+    }
+}
+
+graphql_object!(Step: Context as "Step" |&self| {
+    description: "A step"
+
+    field type() -> &str {
+        &self.model.step_type
+    }
+
+    field value() -> &str {
+        &self.model.value
+    }
+
+    field position() -> i32 {
+        self.model.position
+    }
+
+    field feature(&executor) -> FieldResult<Feature> {
+        let maybe_feature = executor.context().query.feature_by_id(self.model.feature_id)?;
+        match maybe_feature {
+            Some(feature) => Ok(feature),
+            None => Err(FieldError::new(
+                "No feature found for feature_id of step",
+                graphql_value!({ "error": "internal error" })
+            ))
+        }
+    }
+
+    field creator(&executor) -> FieldResult<User> {
+        let maybe_user = executor.context().query.user_by_id(self.model.creator_id)?;
+        match maybe_user {
+            Some(user) => Ok(user),
+            None => Err(FieldError::new(
+                "No user found for creator_id of step",
+                graphql_value!({ "error": "internal error" })
+            ))
+        }
+    }
 });
 
 pub struct Feature {

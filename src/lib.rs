@@ -18,6 +18,7 @@ extern crate r2d2;
 extern crate r2d2_diesel;
 extern crate ring;
 extern crate uuid;
+extern crate heck;
 
 mod schema;
 pub mod web;

@@ -1,7 +1,9 @@
 Feature: Steps
+
   Background:
-    Given a feature with slug "test-feature" owned by John
-    And a logged in user named John
+    Given a logged in user named John
+    And a project with slug "example-project" owned by John
+    And a feature in "example-project" with slug "test-feature" created by John
 
   Scenario: Add a step to a feature
     When a step is submitted to the feature with slug "test-feature"
@@ -14,14 +16,14 @@ Feature: Steps
 
   Scenario: Reorder steps
     Given I have a series of steps:
-      | Step                      |
-      | And the third test step   |
-      | Then the last test step   |
-      | Given the first test step |
-      | When the second test step |
-      | But the fourth test step  |
+      | Type  | Step                 | ID | Pos |
+      | Given | the first test step  |  1 |   3 |
+      | When  | the second test step |  2 |   4 |
+      | When  | the third test step  |  3 |   1 |
+      | Then  | the fourth test step |  4 |   5 |
+      | Then  | the last test step   |  5 |   2 |
     When each step is moved according to the following:
-      | From |  To  |
+      | From | To   |
       |    3 |    1 |
       |    5 |    4 |
       |    2 |    3 |

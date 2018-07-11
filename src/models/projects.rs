@@ -20,7 +20,6 @@ impl Project {
             .get_result(db)
     }
 
-
     pub fn delete(db: &PgConnection, project: Project) -> QueryResult<String> {
         use schema::projects::dsl as projects;
 

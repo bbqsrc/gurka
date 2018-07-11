@@ -63,6 +63,39 @@ impl DatabaseQuery {
             None => Ok(None)
         }
     }
+
+    pub fn feature_by_id(&self, id: i32) -> FieldResult<Option<graphql::models::Feature>> {
+        let db = self.pool.get()?;
+        let record = models::Feature::find_by_id(&*db, id)?;
+        match record {
+            Some(feature) => Ok(Some(graphql::models::Feature::new(feature))),
+            None => Ok(None)
+        }
+    }
+
+    #[doc(hidden)]
+    pub fn project_features(&self, project_id: i32) -> FieldResult<Vec<graphql::models::Feature>> {
+        let db = self.pool.get()?;
+        let maybe_project = models::Project::find_by_id(&*db, project_id)?;
+        let project = match maybe_project {
+            Some(v) => v,
+            None => return Ok(vec![])
+        };
+        let records = models::Feature::all_by_project(&*db, &project)?;
+        Ok(records.into_iter().map(|r| graphql::models::Feature::new(r)).collect())
+    }
+
+    #[doc(hidden)]
+    pub fn feature_steps(&self, feature_id: i32) -> FieldResult<Vec<graphql::models::Step>> {
+        let db = self.pool.get()?;
+        let maybe_feature = models::Feature::find_by_id(&*db, feature_id)?;
+        let feature = match maybe_feature {
+            Some(v) => v,
+            None => return Ok(vec![])
+        };
+        let records = models::Step::all_by_feature(&*db, &feature)?;
+        Ok(records.into_iter().map(|r| graphql::models::Step::new(r)).collect())
+    }
 }
 
 graphql_object!(QueryHolder: Context as "Query" |&self| {
