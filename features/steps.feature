@@ -6,8 +6,8 @@ Feature: Steps
     And a feature in "example-project" with slug "test-feature" created by John
 
   Scenario: Add a step to a feature
-    When a step is submitted to the feature with slug "test-feature"
-    Then a step is added to the feature with slug "test-feature"
+    When a step is submitted to the current feature
+    Then a step is added to the current feature
 
   Scenario: Remove a step
     Given a step in the feature with slug "test-feature"

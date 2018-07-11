@@ -59,8 +59,6 @@ steps! {
                     .into_iter().map(|x| x.model)
                     .collect::<Vec<Step>>();
 
-                // steps.sort_unstable_by(|a, b| a.id.cmp(&b.id));
-
                 last_steps.push(steps);
             }
 
@@ -109,5 +107,23 @@ steps! {
         let project_slug = &matches[2];
         let feature = world.query.feature(project_slug, feature_slug).unwrap().unwrap();
         assert_eq!(&feature.model.slug, feature_slug);
+    };
+
+    when "a step is submitted to the current feature" |world, _| {
+        let new_step = NewStep {
+            feature: world.current_feature().unwrap(),
+            creator: world.current_user().unwrap(),
+            step_type: "When".to_string(),
+            value: "this step does a when".to_string(),
+            position: None
+        };
+
+        world.mutator.create_step(new_step).unwrap();
+    };
+
+    then "a step is added to the current feature" |world, _| {
+        let steps = world.query.feature_steps(world.current_feature().unwrap().id).unwrap();
+
+        assert_eq!(steps.len(), 1);
     };
 }
