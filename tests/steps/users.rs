@@ -3,9 +3,7 @@ use gurka::graphql::GurkaMutator;
 
 use ::MyWorld;
 
-steps! {
-    world: MyWorld;
-
+steps!(MyWorld => {
     when "John creates an account" |world, _| {
         let db = world.pool().get().unwrap();
         let new_user = gurka::models::NewUser::create(&*db, "john", "abc123".to_owned()).unwrap();
@@ -59,4 +57,4 @@ steps! {
         assert_eq!("John", name);
         unimplemented!();
     };
-}
+});

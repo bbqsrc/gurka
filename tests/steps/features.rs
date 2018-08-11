@@ -3,9 +3,7 @@ use gurka::models::{NewStep, Step};
 
 use ::MyWorld;
 
-steps! {
-    world: MyWorld;
-
+steps!(MyWorld => {
     given regex r#"a feature in "(.*)" with slug "(.*)" created by (.*)"# |world, matches, _| {
         let feature_slug = &matches[2];
 
@@ -126,4 +124,4 @@ steps! {
 
         assert_eq!(steps.len(), 1);
     };
-}
+});

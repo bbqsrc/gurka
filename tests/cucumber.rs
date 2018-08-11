@@ -94,14 +94,12 @@ mod steps;
 use steps::*;
 
 cucumber! {
-    features: "./features";
-    world: MyWorld;
+    features: "./features",
+    world: MyWorld,
     steps: &[
         users::steps,
         projects::steps,
         features::steps
-    ];
-    before: || {
-        reset();
-    }
+    ],
+    setup: reset
 }

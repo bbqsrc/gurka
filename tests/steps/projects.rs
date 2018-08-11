@@ -2,9 +2,7 @@ use gurka::graphql::GurkaMutator;
 
 use ::MyWorld;
 
-steps! {
-    world: MyWorld;
-
+steps!(MyWorld => {
     when regex "^a project with slug \"(.*)\" is submitted$" |world, matches, _| {
         let user = world.current_user().unwrap();
         let slug = (&matches[1]).to_string();
@@ -62,4 +60,4 @@ steps! {
         let old_project = world.query.project_by_slug(old_slug).unwrap().unwrap();
         let _new_project = world.mutator.rename_project_slug(old_project.model, new_slug).unwrap();
     };
-}
+});
