@@ -2,6 +2,9 @@
 #![plugin(rocket_codegen)]
 #![feature(trivial_bounds)]
 
+// Workaround for #50504
+#![allow(proc_macro_derive_resolution_fallback)]
+
 extern crate base64;
 #[macro_use]
 extern crate diesel;
