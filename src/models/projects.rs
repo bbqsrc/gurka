@@ -3,7 +3,8 @@ use diesel::prelude::*;
 use diesel::{insert_into, delete, update};
 use ::PgConnection;
 use ::schema;
-use ::schema::projects;
+use ::schema::{projects, users};
+use super::User;
 
 #[derive(Identifiable, Queryable, Debug)]
 pub struct Project {
@@ -57,6 +58,15 @@ impl Project {
             .filter(projects::id.eq(id))
             .get_result(db)
             .optional()
+    }
+
+    pub fn all_for_user(db: &PgConnection, user: &User) -> QueryResult<Vec<Project>> {
+        use schema::projects::dsl as projects;
+        // use schema::users::dsl as users;
+
+        schema::projects::table
+            .filter(projects::owner_id.eq(user.id))
+            .get_results(db)
     }
 }
 

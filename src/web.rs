@@ -13,12 +13,21 @@ fn graphiql() -> Html<String> {
     graphiql_source("/graphql")
 }
 
+#[get("/demo")]
+fn get_demo() -> Html<&'static str> {
+    Html(include_str!("./demo.html"))
+}
+
 #[get("/graphql?<request>")]
 fn get_graphql_handler(
     context: State<Context>,
     request: GraphQLRequest,
     schema: State<Schema>,
 ) -> GraphQLResponse {
+    let context = context.clone().with_user(match context.query.user_by_id(1) {
+        Ok(Some(v)) => Some(v.model),
+        _ => None
+    });
     request.execute(&schema, &context)
 }
 
@@ -28,6 +37,10 @@ fn post_graphql_handler(
     request: GraphQLRequest,
     schema: State<Schema>,
 ) -> GraphQLResponse {
+    let context = context.clone().with_user(match context.query.user_by_id(1) {
+        Ok(Some(v)) => Some(v.model),
+        _ => None
+    });
     request.execute(&schema, &context)
 }
 

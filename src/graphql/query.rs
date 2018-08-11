@@ -73,6 +73,16 @@ impl DatabaseQuery {
         }
     }
 
+    // TODO: slugs are not universally unique, and need a project context
+    pub fn feature_by_slug(&self, slug: &str) -> FieldResult<Option<graphql::models::Feature>> {
+        let db = self.pool.get()?;
+        let record = models::Feature::find_by_slug(&*db, slug)?;
+        match record {
+            Some(feature) => Ok(Some(graphql::models::Feature::new(feature))),
+            None => Ok(None)
+        }
+    }
+
     #[doc(hidden)]
     pub fn project_features(&self, project_id: i32) -> FieldResult<Vec<graphql::models::Feature>> {
         let db = self.pool.get()?;
@@ -96,6 +106,13 @@ impl DatabaseQuery {
         let records = models::Step::all_by_feature(&*db, &feature)?;
         Ok(records.into_iter().map(|r| graphql::models::Step::new(r)).collect())
     }
+    
+    #[doc(hidden)]
+    pub fn user_projects(&self, user: &models::User) -> FieldResult<Vec<graphql::models::Project>> {
+        let db = self.pool.get()?;
+        let records = models::Project::all_for_user(&*db, user)?;
+        Ok(records.into_iter().map(|r| graphql::models::Project::new(r)).collect())
+    }
 }
 
 graphql_object!(QueryHolder: Context as "Query" |&self| {
@@ -117,6 +134,7 @@ graphql_object!(QueryHolder: Context as "Query" |&self| {
     }
 
     field project(&executor, slug: String) -> FieldResult<Option<graphql::models::Project>> {
+        // TODO: slug is not universally unique
         executor.context().query.project_by_slug(&slug)
     }
 });

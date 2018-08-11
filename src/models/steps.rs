@@ -47,7 +47,7 @@ pub struct NewStep<'a> {
 
 #[derive(Insertable)]
 #[table_name="steps"]
-struct NewStepInner {
+pub struct NewStepInner {
     pub slug: String,
     pub feature_id: i32,
     pub creator_id: i32,

@@ -31,6 +31,11 @@ impl Context {
         return self
     }
 
+    pub fn with_user(mut self, user: Option<models::User>) -> Context {
+        self.current_user = user;
+        return self
+    }
+
     pub fn current_user(&self) -> Option<&models::User> {
         match &self.current_user {
             Some(v) => Some(&v),

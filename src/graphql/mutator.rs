@@ -21,7 +21,7 @@ impl DatabaseMutator {
 pub trait GurkaMutator {
     fn create_user(&self, username: &str, password: String) -> FieldResult<graphql::models::User>;
     fn create_project(&self, slug: String, name: String, owner: &models::User) -> FieldResult<graphql::models::Project>;
-    fn create_feature(&self, slug: String, name: String, project: &models::Project, creator: &models::User) -> FieldResult<graphql::models::Feature>;
+    fn create_feature(&self, new_feature: models::NewFeature) -> FieldResult<graphql::models::Feature>; // slug: String, name: String, project: &models::Project, creator: &models::User
     fn create_step(&self, step: models::NewStep) -> FieldResult<graphql::models::Step>;
     fn reorder_step_before(&self, src_step: models::Step, target_step: &models::Step) -> FieldResult<Vec<graphql::models::Step>>;
     fn log_in(&self, username: &str, password: &str) -> FieldResult<graphql::models::UserSession>;
@@ -46,14 +46,9 @@ impl GurkaMutator for DatabaseMutator {
         Ok(graphql::models::Project::new(record))
     }
 
-    fn create_feature(&self, slug: String, name: String, project: &models::Project, creator: &models::User) -> FieldResult<graphql::models::Feature> {
+    fn create_feature(&self, new_feature: models::NewFeature) -> FieldResult<graphql::models::Feature> {
         let db = self.pool.get()?;
-        let record = models::Feature::new(&*db, models::NewFeature {
-            project_id: project.id,
-            creator_id: creator.id,
-            slug: slug,
-            name: name
-        })?;
+        let record = models::Feature::new(&*db, new_feature)?;
         Ok(graphql::models::Feature::new(record))
     }
 
@@ -119,6 +114,67 @@ graphql_object!(MutatorHolder: Context as "Mutator" |&self| {
                 graphql_value!({ "error": "forbidden" })
             ))
         }
+    }
+
+    field create_feature(&executor, new_feature: graphql::models::FeatureInput) -> FieldResult<graphql::models::Feature> {
+        let ctx = executor.context();
+
+        let creator = match executor.context().current_user() {
+            Some(user) => {
+                user
+            },
+            None => return Err(FieldError::new(
+                "No user associated with this session",
+                graphql_value!({ "error": "forbidden" })
+            ))
+        };
+        
+        let maybe_project = ctx.query.project_by_slug(&new_feature.project_slug)?;
+        let project = match maybe_project {
+            Some(v) => v,
+            None => return Err(FieldError::new(
+                "No project found with given slug",
+                graphql_value!({ "error": "not found" })
+            ))
+        };
+
+        executor.context().mutator.create_feature(models::NewFeature {
+            project_id: project.model.id,
+            creator_id: creator.id,
+            slug: new_feature.slug,
+            name: new_feature.name
+        })
+    }
+
+    field create_step(&executor, new_step: graphql::models::StepInput) -> FieldResult<graphql::models::Step> {
+        let ctx = executor.context();
+
+        let creator = match executor.context().current_user() {
+            Some(user) => {
+                user
+            },
+            None => return Err(FieldError::new(
+                "No user associated with this session",
+                graphql_value!({ "error": "forbidden" })
+            ))
+        };
+
+        let maybe_feature = ctx.query.feature_by_slug(&new_step.feature_slug)?;
+        let feature = match maybe_feature {
+            Some(v) => v,
+            None => return Err(FieldError::new(
+                "No feature found with given id",
+                graphql_value!({ "error": "not found" })
+            ))
+        };
+
+        executor.context().mutator.create_step(models::NewStep {
+            feature: &feature.model,
+            creator: &creator,
+            step_type: new_step.step_type,
+            value: new_step.value,
+            position: new_step.position
+        })
     }
 
     field log_in(&executor, username: String, password: String) -> FieldResult<graphql::models::UserSession> {

@@ -23,6 +23,7 @@ pub struct MyWorld {
     current_user: Option<gurka::models::User>,
     current_project: Option<gurka::models::Project>,
     current_feature: Option<gurka::models::Feature>,
+    current_user_projects: Option<Vec<gurka::models::Project>>,
     last_field_error: Option<juniper::FieldError>,
     last_steps: Vec<Vec<gurka::models::Step>>
 }
@@ -84,6 +85,7 @@ impl std::default::Default for MyWorld {
             current_user: None,
             current_project: None,
             current_feature: None,
+            current_user_projects: None,
             last_field_error: None,
             last_steps: vec![]
         }

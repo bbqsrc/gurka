@@ -1,5 +1,5 @@
 use gurka::graphql::GurkaMutator;
-use gurka::models::{NewStep, Step};
+use gurka::models::{NewStep, Step, NewFeature};
 
 use ::MyWorld;
 
@@ -10,7 +10,12 @@ steps!(MyWorld => {
         let feature = {
             let project = world.current_project().unwrap();
             let user = world.current_user().unwrap();
-            world.mutator.create_feature(feature_slug.to_string(), "My Feature".to_string(), &project, &user).unwrap()
+            world.mutator.create_feature(NewFeature {
+                project_id: project.id,
+                creator_id: user.id,
+                slug: "my-feature".to_string(),
+                name: "My Feature".to_string()
+            }).unwrap()
         };
 
         world.current_feature = Some(feature.model);
@@ -89,15 +94,15 @@ steps!(MyWorld => {
         }
     };
 
-    when regex r#"^a feature with slug "(.*)" is submitted$"# |world, matches, _| {
+    when regex r#"^a feature with slug "(.*)" is submitted$"# (String) |world, name, _| {
         let user = world.current_user().unwrap();
 
-        let name = &matches[1];
-        world.mutator.create_feature(
-            name.to_string(),
-            name.to_string(),
-            world.current_project().unwrap(),
-            user).unwrap();
+        world.mutator.create_feature(NewFeature {
+            project_id: world.current_project().unwrap().id,
+            creator_id: user.id,
+            slug: name.to_string(),
+            name: name.to_string()
+        });
     };
 
     then regex r#"^a feature with slug "(.*)" is created in the project with slug "(.*)"$"# |world, matches, _| {

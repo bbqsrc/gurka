@@ -52,9 +52,21 @@ steps!(MyWorld => {
         unimplemented!();
     };
 
-    given regex "^a person named (.*)$" |_world, matches, _| {
-        let name = &matches[1];
+    given regex "^a person named (.*)$" (String) |_world, name, _| {
         assert_eq!("John", name);
         unimplemented!();
+    };
+
+    when "a request to list all projects for the current user is received" |world, _| {
+        let db = world.pool().get().unwrap();
+        let projects = {
+            let user = world.current_user().unwrap();
+            gurka::models::Project::all_for_user(&*db, &user).unwrap()
+        };
+        world.current_user_projects = Some(projects);
+    };
+
+    then "a list of all projects owned by the current user are shown" |world, _|  {
+        assert!(world.current_user_projects.is_some());
     };
 });

@@ -3,11 +3,6 @@ use juniper::{FieldResult, FieldError};
 use models;
 use context::Context;
 
-#[derive(GraphQLObject)]
-pub struct Success {
-    is_success: bool
-}
-
 pub struct User {
     pub model: models::User
 }
@@ -27,6 +22,10 @@ graphql_object!(User: Context as "User" |&self| {
 
     field username() -> &String {
         &self.model.username
+    }
+
+    field projects(&executor) -> FieldResult<Vec<Project>> {
+       executor.context().query.user_projects(&self.model)
     }
 });
 
@@ -105,6 +104,21 @@ pub struct Step {
     pub model: models::Step
 }
 
+#[derive(GraphQLInputObject)]
+pub struct StepInput {
+    pub feature_slug: String,
+    pub step_type: String,
+    pub value: String,
+    pub position: Option<i32>
+}
+
+#[derive(GraphQLInputObject)]
+pub struct FeatureInput {
+    pub project_slug: String,
+    pub slug: String,
+    pub name: String
+}
+
 impl Step {
     pub fn new(step: models::Step) -> Step {
         Step { model: step }
@@ -176,6 +190,21 @@ graphql_object!(Feature: Context as "Feature" |&self| {
             Some(project) => Ok(project),
             None => Err(FieldError::new(
                 "No project found for project_id of feature",
+                graphql_value!({ "error": "internal error" })
+            ))
+        }
+    }
+
+    field steps(&executor) -> FieldResult<Vec<Step>> {
+        executor.context().query.feature_steps(self.model.id)
+    }
+
+    field creator(&executor) -> FieldResult<User> {
+        let maybe_user = executor.context().query.user_by_id(self.model.creator_id)?;
+        match maybe_user {
+            Some(user) => Ok(user),
+            None => Err(FieldError::new(
+                "No user found for creator_id of step",
                 graphql_value!({ "error": "internal error" })
             ))
         }

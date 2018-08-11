@@ -9,7 +9,7 @@ Feature: User
     Then a login failure error occurs
 
   Scenario: Edit User
-    Given a user logged in named John
+    Given a logged in user named John
     When John edits a property of their account
     Then John's account is updated
   
@@ -23,3 +23,8 @@ Feature: User
     Given a user logged in as an administrator
     When an account named John is selected for deletion
     Then John's account no longer exists
+
+  Scenario: List all projects for a user
+    Given a logged in user named John
+    When a request to list all projects for the current user is received
+    Then a list of all projects owned by the current user are shown

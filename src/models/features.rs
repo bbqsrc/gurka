@@ -48,6 +48,15 @@ impl Feature {
             .optional()
     }
 
+    pub fn find_by_slug(db: &PgConnection, slug: &str) -> QueryResult<Option<Feature>> {
+        use schema::features::dsl as features;
+
+        schema::features::table
+            .filter(features::slug.eq(slug))
+            .get_result(db)
+            .optional()
+    }
+
     pub fn all_by_project(db: &PgConnection, project: &Project) -> QueryResult<Vec<Feature>> {
         Feature::belonging_to(project)
             .get_results(db)
