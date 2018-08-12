@@ -116,7 +116,7 @@ graphql_object!(MutatorHolder: Context as "Mutator" |&self| {
         }
     }
 
-    field create_feature(&executor, new_feature: graphql::models::FeatureInput) -> FieldResult<graphql::models::Feature> {
+    field create_feature(&executor, new_feature: graphql::models::NewFeatureInput) -> FieldResult<graphql::models::Feature> {
         let ctx = executor.context();
 
         let creator = match executor.context().current_user() {
@@ -146,7 +146,7 @@ graphql_object!(MutatorHolder: Context as "Mutator" |&self| {
         })
     }
 
-    field create_step(&executor, new_step: graphql::models::StepInput) -> FieldResult<graphql::models::Step> {
+    field create_step(&executor, new_step: graphql::models::NewStepInput) -> FieldResult<graphql::models::Step> {
         let ctx = executor.context();
 
         let creator = match executor.context().current_user() {

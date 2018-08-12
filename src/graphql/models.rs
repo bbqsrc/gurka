@@ -105,7 +105,7 @@ pub struct Step {
 }
 
 #[derive(GraphQLInputObject)]
-pub struct StepInput {
+pub struct NewStepInput {
     pub feature_slug: String,
     pub step_type: String,
     pub value: String,
@@ -113,7 +113,7 @@ pub struct StepInput {
 }
 
 #[derive(GraphQLInputObject)]
-pub struct FeatureInput {
+pub struct NewFeatureInput {
     pub project_slug: String,
     pub slug: String,
     pub name: String
