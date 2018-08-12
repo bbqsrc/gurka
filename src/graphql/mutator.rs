@@ -116,6 +116,23 @@ graphql_object!(MutatorHolder: Context as "Mutator" |&self| {
         }
     }
 
+    field reorder_step_before(&executor, feature_id: i32, step: i32, target: i32) -> FieldResult<Vec<graphql::models::Step>> {
+        let maybe_feature = executor.context().query.feature_by_id(feature_id)?;
+
+        let feature = match maybe_feature {
+            Some(v) => v,
+            None => return Err(FieldError::new(
+                "No feature found with given id",
+                graphql_value!({ "error": "not found" })
+            ))
+        };
+
+        let steps = executor.context().query.feature_steps(feature.model.id)?;
+        let tgt = steps.iter().find(|x| x.model.position == target).unwrap();
+        let cur = steps.iter().find(|x| x.model.position == step).unwrap();
+        executor.context().mutator.reorder_step_before(cur.model.clone(), &tgt.model)
+    }
+
     field create_feature(&executor, new_feature: graphql::models::NewFeatureInput) -> FieldResult<graphql::models::Feature> {
         let ctx = executor.context();
 

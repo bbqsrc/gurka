@@ -176,6 +176,10 @@ impl Feature {
 graphql_object!(Feature: Context as "Feature" |&self| {
     description: "A feature"
 
+    field id() -> i32 {
+        self.model.id
+    }
+
     field slug() -> &str {
         &self.model.slug
     }
