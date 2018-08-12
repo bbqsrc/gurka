@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use diesel::{insert_into, delete, update};
 use ::PgConnection;
 use ::schema;
-use ::schema::{projects, users};
+use ::schema::projects;
 use super::User;
 
 #[derive(Identifiable, Queryable, Debug)]
